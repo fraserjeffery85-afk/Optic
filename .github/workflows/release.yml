@@ -18,7 +18,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Is this version new?
         id: version
         run: |
@@ -27,7 +27,7 @@ jobs:
           if gh release view "v$v" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "v$v is already released; nothing to do."; echo "new=false" >> "$GITHUB_OUTPUT"
           else echo "new=true" >> "$GITHUB_OUTPUT"; fi
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         if: steps.version.outputs.new == 'true'
         with:
           go-version-file: go.mod
@@ -38,7 +38,7 @@ jobs:
         if: steps.version.outputs.new == 'true'
         run: |
           go test ./...
-          GOOS=windows GOARCH=amd64 go vet .
+          GOOS=windows GOARCH=amd64 go vet -unsafeptr=false .   # NVAPI hands back raw function addresses
       - name: Check the signing key is set
         if: steps.version.outputs.new == 'true'
         env:

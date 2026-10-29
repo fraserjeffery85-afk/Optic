@@ -8,11 +8,11 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - run: sudo apt-get update && sudo apt-get install -y binutils-mingw-w64-x86-64 nsis
       - run: go test ./...
-      - run: GOOS=windows GOARCH=amd64 go vet .
+      - run: GOOS=windows GOARCH=amd64 go vet -unsafeptr=false .   # NVAPI hands back raw function addresses
       - run: scripts/build.sh

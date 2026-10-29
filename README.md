@@ -8,7 +8,7 @@ Optic never touches the game. It changes the display's gamma ramp (`SetDeviceGam
 
 ```bash
 go test ./...                    # unit tests (run on any OS)
-GOOS=windows go vet .            # Windows code
+GOOS=windows go vet -unsafeptr=false .   # Windows code
 scripts/build.sh                 # dist/build/Optic.exe + dist/Optic-Setup-<version>.exe
 ```
 
