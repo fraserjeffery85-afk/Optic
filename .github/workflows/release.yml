@@ -1,0 +1,62 @@
+# Publishes a release whenever main has a version (appVersion in version.go) that
+# hasn't been released yet. GitHub creates the v<version> tag itself. Can also be
+# started from the Actions tab (Run workflow). Needs the secret UPDATE_SIGNING_KEY.
+# Everything runs on Linux: Go cross-compiles Optic.exe, NSIS builds the installer.
+name: Release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Is this version new?
+        id: version
+        run: |
+          v=$(sed -n 's/^const appVersion = "\(.*\)"/\1/p' version.go)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "v$v" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "v$v is already released; nothing to do."; echo "new=false" >> "$GITHUB_OUTPUT"
+          else echo "new=true" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/setup-go@v5
+        if: steps.version.outputs.new == 'true'
+        with:
+          go-version-file: go.mod
+      - name: Install build tools
+        if: steps.version.outputs.new == 'true'
+        run: sudo apt-get update && sudo apt-get install -y binutils-mingw-w64-x86-64 nsis
+      - name: Tests
+        if: steps.version.outputs.new == 'true'
+        run: |
+          go test ./...
+          GOOS=windows GOARCH=amd64 go vet .
+      - name: Check the signing key is set
+        if: steps.version.outputs.new == 'true'
+        env:
+          OPTIC_UPDATE_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          if [ -z "$OPTIC_UPDATE_KEY" ]; then
+            echo "::error::The UPDATE_SIGNING_KEY secret is missing. See docs/UPDATES.md."; exit 1
+          fi
+      - name: Build Optic.exe, installer and signed update files
+        if: steps.version.outputs.new == 'true'
+        env:
+          UPDATE_REPO: ${{ github.repository }}
+          OPTIC_UPDATE_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: scripts/build.sh --sign
+      - name: Publish release
+        if: steps.version.outputs.new == 'true'
+        run: |
+          v=${{ steps.version.outputs.version }}
+          jq -r .notes dist/update/update.json > notes.md
+          gh release create "v$v" "dist/Optic-Setup-$v.exe" dist/update/update.json dist/update/update.json.sig \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Optic $v" --notes-file notes.md

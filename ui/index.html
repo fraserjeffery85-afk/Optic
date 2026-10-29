@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Optic</title>
+<style>
+:root{
+  --bg:#0f1013; --panel:#17181d; --panel2:#202127; --panel3:#2a2b33; --line:#30313a;
+  --text:#f3f5f9; --muted:#a8afbe; --accent:#e3262f; --accent-ink:#ffffff; --accent-text:#ff5c63; --blue:#7cc4ff;
+  --on:#e3262f; --warn:#ffb020; --bad:#ff7a80; --radius:18px; --fs:19px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:var(--fs)/1.45 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;-webkit-user-select:none;user-select:none;overflow-y:auto}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;padding:18px;max-width:1500px;margin:0 auto}
+@media (max-width:1050px){.app{grid-template-columns:1fr}}
+header{grid-column:1/-1;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{width:50px;height:50px;flex:none;display:block}
+h1{font-size:1.45em;margin:0;line-height:1.1}
+.tagline{color:var(--muted);font-size:.82em}
+.grow{flex:1}
+.pill{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px}
+.pill button{border:0;background:none;cursor:pointer;padding:7px 13px;border-radius:999px;color:var(--muted);font-weight:700}
+.pill button.on{background:var(--panel3);color:var(--text)}
+.iconbtn{border:1px solid var(--line);background:var(--panel);border-radius:999px;width:50px;height:50px;cursor:pointer;font-size:1.25em}
+.master{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 8px 7px 18px;cursor:pointer}
+.master .dot{width:13px;height:13px;border-radius:50%;background:var(--muted)}
+.master.active .dot{background:var(--on);box-shadow:0 0 12px var(--on)}
+.master b{font-size:.95em}
+.switch{width:78px;height:42px;border-radius:999px;background:#454b59;position:relative;transition:.2s;flex:none}
+.switch::after{content:"";position:absolute;top:5px;left:5px;width:32px;height:32px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on{background:var(--on)}
+.switch.on::after{left:41px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card h2{white-space:nowrap;font-size:.85em;margin:0 0 14px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1.4px;display:flex;align-items:center;gap:10px}
+.card h2 .grow{flex:1}
+.statusbar{grid-column:1/-1;display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-weight:600}
+.statusbar.err{border-color:#6b3a20;background:#2a1a12;color:#ffd0b0}
+/* preview */
+.preview{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:16/9;background:#000;cursor:ew-resize;touch-action:none}
+.preview img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.split{position:absolute;top:0;bottom:0;width:4px;background:#fff;transform:translateX(-2px);pointer-events:none}
+.split::after{content:"⟷";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;color:#000;border-radius:50%;width:46px;height:46px;display:grid;place-items:center;font-weight:800;font-size:1.1em;box-shadow:0 2px 10px #0008}
+.tag{position:absolute;top:12px;padding:5px 13px;border-radius:999px;background:rgba(0,0,0,.7);font-weight:700;font-size:.8em;pointer-events:none}
+.tag.l{left:12px}.tag.r{right:12px;background:var(--accent);color:#fff}
+.prevbar{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:.85em}
+.chip.on{border-color:var(--accent);color:#fff;background:var(--accent)}
+.screen-toggle{display:flex;gap:10px;align-items:center;cursor:pointer;font-weight:600;font-size:.9em}
+.screen-toggle .switch{width:58px;height:32px}
+.screen-toggle .switch::after{width:24px;height:24px;top:4px;left:4px}
+.screen-toggle .switch.on::after{left:30px}
+/* looks */
+.looks{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:18px}
+.look{position:relative;background:var(--panel2);border:3px solid transparent;border-radius:15px;overflow:hidden;cursor:pointer;text-align:left;padding:0}
+.look canvas,.look .add{width:100%;aspect-ratio:16/9;display:block;background:#000}
+.look .add{display:grid;place-items:center;font-size:2.3em;color:var(--muted);background:var(--panel3)}
+.look .name{padding:9px 11px;font-weight:700;font-size:.88em;line-height:1.25}
+.look.sel{border-color:var(--accent)}
+.look.sel .name::before{content:"✓ ";color:var(--accent-text)}
+.look .badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.72);border-radius:999px;padding:2px 9px;font-size:.7em;font-weight:700;color:var(--blue)}
+.lookbar{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:12px;padding:10px 16px;cursor:pointer;font-weight:700;font-size:.88em}
+.btn:hover{background:var(--panel3)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:#5a2a2e}
+.btn:disabled{opacity:.4;cursor:default}
+/* side */
+.side{display:grid;gap:18px;align-content:start}
+.game{display:flex;align-items:center;gap:14px}
+.gameic{width:56px;height:56px;border-radius:14px;background:#fff;display:grid;place-items:center;font-weight:900;color:var(--accent);flex:none;font-size:1.05em}
+.game .info{flex:1;min-width:0}
+.game .info b{display:block;font-size:1.05em}
+.game .info span{color:var(--muted);font-size:.8em;display:block}
+.gamesel{width:100%;margin-top:12px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;font-size:.9em}
+.link{border:0;background:none;color:var(--blue);cursor:pointer;font-weight:700;padding:6px 0;font-size:.85em}
+.slider{margin:4px 0 20px}
+.slider .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.slider label{font-weight:800;font-size:1.05em}
+.slider .val{color:var(--accent-text);font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:1px solid transparent;border-radius:8px;width:5.2em;text-align:right;font:inherit;font-weight:800;padding:2px 6px;-webkit-user-select:text;user-select:text}
+.slider .val:hover{border-color:var(--line)}
+.slider .val:focus{outline:none;border-color:var(--accent);background:var(--panel2);color:var(--text)}
+.track{display:flex;align-items:center;gap:10px}
+.track input[type=range]{flex:1}
+.nudge{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:1.2em;font-weight:800;cursor:pointer;line-height:1}
+.nudge:hover{background:var(--panel3)}
+.nudge:active{background:var(--accent);border-color:var(--accent)}
+.savebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-2px 0 18px;padding:12px;background:var(--panel2);border-radius:14px}
+.savebar .state{flex:1 0 100%;font-weight:700;font-size:.85em;display:flex;align-items:center;gap:8px}
+.savebar .state .pip{width:10px;height:10px;border-radius:50%;background:#3ddc84}
+.savebar.dirty{background:#2a1a12;border:1px solid #6b3a20}
+.savebar.dirty .state{color:#ffd0a8}
+.savebar.dirty .state .pip{background:#ffb020;box-shadow:0 0 8px #ffb020}
+.savebar .btn{padding:9px 14px}
+.look .unsaved{position:absolute;top:8px;right:8px;background:#ffb020;color:#1a1405;border-radius:999px;padding:2px 9px;font-size:.68em;font-weight:800}
+.slider .hint{color:var(--muted);font-size:.78em;margin:1px 0 9px}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:12px;border-radius:999px;background:#353b49;outline:none;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:32px;height:32px;border-radius:50%;background:var(--accent);border:4px solid #fff;cursor:pointer;box-shadow:0 2px 6px #0007}
+input[type=range]:focus-visible::-webkit-slider-thumb{outline:3px solid var(--blue)}
+.more{display:none;border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
+.more.open{display:block}
+.more .slider{margin-bottom:14px}
+.more .slider label{font-size:.92em}
+.modes{display:grid;gap:12px}
+.mode{display:flex;gap:14px;align-items:center;background:var(--panel2);border-radius:14px;padding:14px 16px;cursor:pointer;border:2px solid transparent;text-align:left;width:100%}
+.mode:hover{border-color:var(--line)}
+.mode .ic{font-size:1.7em;width:44px;text-align:center;flex:none}
+.mode b{display:block;font-size:1.02em}
+.mode span{color:var(--muted);font-size:.8em}
+.mode.on{border-color:var(--accent);background:#2a1618}
+.mode.on b::after{content:"  ✓";color:var(--accent-text)}
+.rsnote{color:var(--muted);font-size:.8em;margin-top:12px;line-height:1.45}
+.rsnote.pending{color:#ffd0a8;background:#2a1a12;border:1px solid #6b3a20;border-radius:12px;padding:10px 12px}
+.rsbadge{text-transform:none;letter-spacing:0;font-size:.95em;padding:3px 10px;border-radius:999px;background:var(--panel3);color:var(--text)}
+.rsbadge.on{background:#fff;color:#141519}
+.keys{color:var(--muted);font-size:.84em;line-height:2.05}
+kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:1px 7px;color:var(--text);font:inherit;font-size:.88em}
+.note{background:#2a2412;border:1px solid #574a1c;color:#ffe3a1;border-radius:12px;padding:10px 14px;font-size:.8em;margin-top:8px}
+/* modal + settings sheet */
+.scrim{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:10;padding:20px}
+.scrim.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;width:min(520px,100%)}
+.modal h3{margin:0 0 10px;font-size:1.2em}
+.modal p{color:var(--muted);margin:0 0 16px;font-size:.92em;white-space:pre-line}
+.modal input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:12px;font:inherit;margin-bottom:16px;-webkit-user-select:text;user-select:text}
+.modal .acts{display:flex;justify-content:flex-end;gap:10px}
+.sheet{width:min(640px,100%);max-height:92vh;overflow:auto}
+.opt{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.opt:last-child{border-bottom:0}
+.opt .txt{flex:1}
+.opt .txt b{display:block;font-size:.95em}
+.opt .txt span{color:var(--muted);font-size:.78em}
+.opt .switch{width:58px;height:32px}
+.opt .switch::after{width:24px;height:24px;top:4px;left:4px}
+.opt .switch.on::after{left:30px}
+.seg{display:flex;background:var(--panel2);border-radius:12px;padding:4px;gap:4px;margin:6px 0 4px}
+.seg button{flex:1;border:0;background:none;padding:9px;border-radius:9px;cursor:pointer;color:var(--muted);font-weight:700;font-size:.82em}
+.seg button.on{background:var(--panel3);color:var(--text)}
+.wn{width:min(620px,100%);max-height:90vh;overflow:auto}
+.wn .head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.wn .head svg{width:54px;height:54px;flex:none}
+.wn .ver{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:3px 12px;font-weight:800;font-size:.75em;margin-bottom:10px}
+.wn h4{margin:18px 0 8px;font-size:.95em;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px}
+.wn ul{margin:0;padding:0;list-style:none}
+.wn li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.92em}
+.wn li:last-child{border-bottom:0}
+.wn li .dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:.5em}
+.wn li b{display:block}
+.wn li span{color:var(--muted);font-size:.9em}
+.updbar{display:none;align-items:center;gap:12px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--accent);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px}
+.updbar.show{display:flex}
+.updbar .txt{flex:1;min-width:220px}
+.updbar .txt b{display:block}
+.updbar .txt span{color:var(--muted);font-size:.88em}
+.updbar .prog{flex-basis:100%;height:6px;border-radius:3px;background:var(--panel2);overflow:hidden;display:none}
+.updbar .prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.updrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px}
+.updrow span{flex:1;min-width:180px;color:var(--muted);font-size:.88em}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel3);border:1px solid var(--line);padding:12px 20px;border-radius:14px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="lookfx" color-interpolation-filters="sRGB">
+    <feColorMatrix id="satfx" type="saturate" values="1"/>
+    <feComponentTransfer>
+      <feFuncR id="fr" type="table" tableValues="0 1"/>
+      <feFuncG id="fg" type="table" tableValues="0 1"/>
+      <feFuncB id="fb" type="table" tableValues="0 1"/>
+    </feComponentTransfer>
+  </filter>
+</svg>
+
+<div class="app">
+  <header>
+    <svg class="logo" viewBox="0 0 256 256" aria-hidden="true"><defs><clipPath id="lgL"><rect width="128" height="256"/></clipPath><clipPath id="lgR"><rect x="128" width="128" height="256"/></clipPath></defs><rect x="8" y="8" width="240" height="240" rx="56" fill="#141519" stroke="#30313a" stroke-width="6"/><circle cx="128" cy="128" r="74" fill="none" stroke="#fff" stroke-width="40" clip-path="url(#lgL)"/><circle cx="128" cy="128" r="74" fill="none" stroke="#e3262f" stroke-width="40" clip-path="url(#lgR)"/></svg>
+    <div><h1>Optic</h1><div class="tagline">by OB Industries · see more in every shadow</div></div>
+    <div class="grow"></div>
+    <div class="pill" role="group" aria-label="Text size">
+      <button data-scale="0" title="Normal text">A</button>
+      <button data-scale="1" title="Large text">A+</button>
+      <button data-scale="2" title="Extra large text">A++</button>
+    </div>
+    <button class="iconbtn" id="gear" title="Settings" aria-label="Settings">⚙</button>
+    <div class="master" id="master" role="switch" tabindex="0" aria-label="Effect on or off">
+      <span class="dot"></span><b id="masterText">Optic is ON</b><div class="switch" id="masterSwitch"></div>
+    </div>
+  </header>
+
+  <div class="updbar" id="updbar" role="status">
+    <div class="txt"><b id="updTitle"></b><span id="updText"></span></div>
+    <button class="btn primary" id="updGo"></button>
+    <button class="btn" id="updNotes">What's new</button>
+    <button class="btn" id="updSkip">Skip this version</button>
+    <button class="btn" id="updLater">Not now</button>
+    <div class="prog" id="updProg"><i></i></div>
+  </div>
+
+  <div class="statusbar" id="statusbar"><span id="statusText">Starting…</span></div>
+
+  <main class="card">
+    <h2>How it will look <span class="grow"></span>
+      <span class="screen-toggle" id="screenToggle" title="Show the selected look on your whole screen right now, while you adjust">
+        <span>Try it on my screen</span><span class="switch" id="screenSwitch"></span>
+      </span>
+    </h2>
+    <div class="preview" id="preview">
+      <img id="imgBefore" alt="">
+      <img id="imgAfter" alt="" style="filter:url(#lookfx)">
+      <div class="split" id="split"></div>
+      <span class="tag l">Normal</span><span class="tag r">With Optic</span>
+    </div>
+    <div class="prevbar">
+      <span style="color:var(--muted);font-size:.85em;font-weight:600">Preview picture:</span>
+      <button class="chip" id="srcShot">Latest game screenshot</button>
+      <button class="chip" id="srcChart">Test picture</button>
+      <button class="chip" id="srcPick">Choose a picture…</button>
+    </div>
+
+    <div class="looks" id="looks"></div>
+    <div class="lookbar" id="lookbar"></div>
+  </main>
+
+  <aside class="side">
+    <section class="card">
+      <div class="game">
+        <div class="gameic" id="gameIc">MX</div>
+        <div class="info"><b id="gameName">MX Bikes</b><span id="gameSub"></span></div>
+      </div>
+      <select class="gamesel" id="gameSel" aria-label="Game"></select>
+      <div style="display:flex;gap:6px 18px;flex-wrap:wrap;margin-top:6px">
+        <button class="link" id="addGame">+ Add a game</button>
+        <button class="link" id="fixFolder">Game location…</button>
+        <button class="link" id="removeGame" style="color:var(--bad)">Remove</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Fine-tune <span class="grow"></span><span id="lookLabel" style="text-transform:none;letter-spacing:0;color:var(--accent-text);overflow:hidden;text-overflow:ellipsis;max-width:60%"></span></h2>
+      <div class="savebar" id="savebar">
+        <div class="state"><span class="pip"></span><span id="saveState">Saved</span></div>
+        <button class="btn primary" id="saveBtn" title="Keep these settings in this look">💾 Save look</button>
+        <button class="btn" id="saveAsBtn" title="Put these settings in a new look and leave this one as it was">Save as new look…</button>
+        <button class="btn" id="undoBtn" title="Go back to the last saved version">↶ Undo changes</button>
+      </div>
+      <div id="simpleSliders"></div>
+      <button class="link" id="moreBtn">More settings ▾</button>
+      <div class="more" id="more"><div id="moreSliders"></div>
+        <button class="btn" id="resetLook">Reset this look</button>
+      </div>
+      <div class="note" id="satNote" style="display:none"></div>
+    </section>
+
+    <section class="card">
+      <h2>ReShade <span class="grow"></span><span id="rsBadge" class="rsbadge"></span></h2>
+      <div id="rsBox">
+        <div class="modes">
+          <button class="mode" id="raceBtn"><div class="ic">🏁</div><div><b>Race setup</b><span>ReShade off · Optic on</span></div></button>
+          <button class="mode" id="photoBtn"><div class="ic">📸</div><div><b>Photo setup</b><span>ReShade on with your presets · Optic paused</span></div></button>
+        </div>
+        <div class="rsnote" id="rsNote"></div>
+      </div>
+      <div class="rsnote" id="rsNone" style="display:none">ReShade isn't installed for this game, so there's nothing to switch. Optic works on its own.</div>
+      <button class="link" id="plainBtn">Start the game from here instead</button>
+    </section>
+
+    <section class="card keys">
+      <h2>In-game keys</h2>
+      <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F5</kbd> <kbd>F6</kbd> shadows down / up<br>
+      <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F7</kbd> <kbd>F8</kbd> darker / brighter<br>
+      <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F10</kbd> next look<br>
+      <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F9</kbd> Optic on / off<br>
+      <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F12</kbd> reset my screen
+    </section>
+    <div style="text-align:center;color:var(--muted);font-size:.78em;padding:2px 0 8px">Created by <b style="color:var(--text)">OB Industries</b></div>
+  </aside>
+</div>
+
+<div class="scrim" id="modalScrim"><div class="modal" id="modal">
+  <h3 id="mTitle"></h3><p id="mText"></p><input id="mInput" style="display:none">
+  <div class="acts" id="mActs"></div>
+</div></div>
+
+<div class="scrim" id="sheetScrim"><div class="modal sheet">
+  <h3>Settings</h3>
+  <div id="opts"></div>
+  <div class="updrow"><span id="updStatus">Optic checks GitHub for new versions.</span><button class="btn" id="updCheck">Check for updates</button></div>
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn" id="unlockBtn">Allow stronger looks…</button>
+    <button class="btn danger" id="emergencyBtn">Reset my screen now</button>
+    <button class="btn" id="exitBtn" title="Close Optic completely (it stops switching on for games)">⏻ Exit Optic</button>
+    <button class="btn" id="wnOpen">What's new</button>
+    <div class="grow"></div>
+    <button class="btn primary" id="sheetClose">Done</button>
+  </div>
+  <p id="aboutText" style="color:var(--muted);font-size:.75em;margin:16px 0 0"></p>
+</div></div>
+
+<div class="scrim" id="wnScrim"><div class="modal wn" role="dialog" aria-labelledby="wnTitle">
+  <div class="head"><svg viewBox="0 0 256 256" aria-hidden="true"><defs><clipPath id="wnL"><rect width="128" height="256"/></clipPath><clipPath id="wnR"><rect x="128" width="128" height="256"/></clipPath></defs><rect x="8" y="8" width="240" height="240" rx="56" fill="#141519" stroke="#30313a" stroke-width="6"/><circle cx="128" cy="128" r="74" fill="none" stroke="#fff" stroke-width="40" clip-path="url(#wnL)"/><circle cx="128" cy="128" r="74" fill="none" stroke="#e3262f" stroke-width="40" clip-path="url(#wnR)"/></svg>
+    <div><h3 id="wnTitle" style="margin:0">What's new in Optic</h3><div style="color:var(--muted);font-size:.85em">by OB Industries</div></div></div>
+  <div id="wnBody"></div>
+  <div class="acts" style="display:flex;justify-content:flex-end;margin-top:18px"><button class="btn primary" id="wnClose">Got it</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------------- backend bridge (falls back to a mock in a normal browser) ---------------- */
+const hasApi = typeof window.api_state === "function";
+const api = new Proxy({}, {get:(_, k)=> (...a)=> hasApi ? window["api_"+k](...a) : mock(k, a)});
+
+/* ---------------- colour maths (identical to the Go engine) ---------------- */
+const c01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+function tone(x, s){
+  const bp = s.blackPoint/255, wp = s.whitePoint/255;
+  x = c01((x-bp)/(wp-bp));
+  x = c01(x*(1+s.brightness/100));
+  const p = 4/27, sh = x*(1-x)*(1-x)/p, hi = x*x*(1-x)/p;
+  x = c01(x + .25*(s.shadows/100)*sh + .25*(s.highlights/100)*hi);
+  const c = s.contrast/50;
+  if (c > 0) x = x + (x*x*(3-2*x)-x)*c;
+  else if (c < 0){ const inv = .5 - Math.sin(Math.asin(1-2*x)/3); x = x + (inv-x)*(-c); }
+  if (x > 0) x = Math.pow(x, 1/s.gamma);
+  return c01(x);
+}
+function gains(s){
+  const t = s.temperature/50, tn = s.tint/50;
+  let wb = [1+.18*t, 1-.12*tn, 1-.18*t];
+  if (tn < 0) wb = [(1+.18*t)*(1+.12*tn), 1, (1-.18*t)*(1+.12*tn)];
+  const m = Math.max(...wb), u = [s.red/100, s.green/100, s.blue/100];
+  return wb.map((v,i)=> v/m*u[i]);
+}
+function tables(s, n=64){
+  const g = gains(s), f = s.blackFloor/100, out = [[],[],[]];
+  for (let i=0;i<=n;i++){ const b = tone(i/n, s); for (let ch=0;ch<3;ch++) out[ch].push((f+(1-f)*c01(b*g[ch])).toFixed(4)); }
+  return out.map(a=>a.join(" "));
+}
+const satValue = s => 1 + (s.saturation/100)*0.9;
+
+/* ---------------- sliders ---------------- */
+const SIMPLE = [
+  ["shadows","Shadows","See into dark areas",-50,100,0.5,v=>sign(v)],
+  ["brightness","Brightness","Whole picture lighter or darker",-50,50,0.5,v=>sign(v)],
+  ["saturation","Colour","Richer colours",0,100,0.5,v=>"+"+num(v)],
+];
+const MORE = [
+  ["highlights","Highlights","Tame bright areas and glare (move left)",-100,50,0.5,v=>sign(v)],
+  ["contrast","Contrast","More or less punch",-50,50,0.5,v=>sign(v)],
+  ["gamma","Mid-tones","Brighten the middle of the picture",0.5,2,0.01,v=>v.toFixed(2)],
+  ["whitePoint","White point","Lower = brighter whites (ReShade Levels)",128,255,1,v=>Math.round(v)],
+  ["blackPoint","Black point","Higher = deeper blacks",0,127,1,v=>Math.round(v)],
+  ["blackFloor","Black floor","Turn pure black into dark grey",0,30,0.5,v=>num(v)+"%"],
+  ["temperature","Warmth","Cooler (blue) to warmer (orange)",-50,50,0.5,v=>sign(v)],
+  ["tint","Tint","Green to pink",-50,50,0.5,v=>sign(v)],
+  ["red","Red","",50,150,0.5,v=>num(v)+"%"],
+  ["green","Green","",50,150,0.5,v=>num(v)+"%"],
+  ["blue","Blue","",50,150,0.5,v=>num(v)+"%"],
+];
+const num = v => { const r = Math.round(v*100)/100; return Number.isInteger(r) ? String(r) : (Math.abs(r*10 - Math.round(r*10)) < 1e-9 ? r.toFixed(1) : r.toFixed(2)) };
+const sign = v => (v>0?"+":"") + num(v);
+// "normal" value for each slider (0 for most; levels/mid-tones/RGB have their own neutral)
+const NEUTRAL = {shadows:0,brightness:0,saturation:0,highlights:0,contrast:0,gamma:1,whitePoint:255,blackPoint:0,blackFloor:0,temperature:0,tint:0,red:100,green:100,blue:100};
+
+let S = null;               // full state from the app
+let sliderEls = {};
+let saveTimer = null;
+let previewSrc = "chart";
+let imgData = "";
+
+function $(id){ return document.getElementById(id) }
+function el(tag, cls, html){ const e = document.createElement(tag); if (cls) e.className = cls; if (html!=null) e.innerHTML = html; return e }
+function esc(t){ return String(t).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) }
+function toast(t){ const e=$("toast"); e.textContent=t; e.classList.add("show"); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove("show"),2200) }
+
+function current(){ return S.looks.find(l=>l.name===S.editor) || S.looks[0] }
+function game(){ return S.games[S.selectedGame] }
+
+function buildSliders(){
+  const make = (host, defs) => { host.innerHTML = ""; defs.forEach(([k,label,hint,min,max,step,fmt])=>{
+    const w = el("div","slider");
+    w.innerHTML = `<div class="row"><label for="s_${k}">${label}</label><input class="val" id="v_${k}" inputmode="decimal" spellcheck="false" aria-label="${label} exact value" title="Click to type an exact value"></div>${hint?`<div class="hint">${hint}</div>`:""}
+      <div class="track"><button class="nudge" data-d="-1" aria-label="${label} down" title="Nudge down (hold to repeat)">−</button><input type="range" id="s_${k}" min="${min}" max="${max}" step="${step}"><button class="nudge" data-d="1" aria-label="${label} up" title="Nudge up (hold to repeat)">+</button></div>`;
+    host.appendChild(w);
+    const input = w.querySelector("input[type=range]"), box = w.querySelector(".val");
+    const clamp = v => Math.min(max, Math.max(min, Math.round(v/step)*step));
+    const apply = v => {
+      v = clamp(v);
+      input.value = v;
+      current().settings[k] = v;
+      box.value = fmt(v);
+      paintPreview(); queueSave(); renderSaveState();
+    };
+    input.addEventListener("input", ()=> apply(parseFloat(input.value)));
+    // Shift + arrow keys = 10 steps; plain arrows = 1 step (built in)
+    input.addEventListener("keydown", e=>{
+      if (!e.shiftKey) return;
+      const d = {ArrowRight:1, ArrowUp:1, ArrowLeft:-1, ArrowDown:-1}[e.key];
+      if (d){ e.preventDefault(); apply(current().settings[k] + d*step*10) }
+    });
+    // type an exact value
+    const commit = ()=>{ const v = parseFloat(String(box.value).replace(/[^0-9.\-]/g,"")); if (isNaN(v)) box.value = fmt(current().settings[k]); else apply(v) };
+    // select the old number straight away, and keep the selection when the click ends
+    let justFocused = false;
+    box.addEventListener("focus", ()=>{ box.select(); justFocused = true });
+    box.addEventListener("mouseup", e=>{ if (justFocused){ e.preventDefault(); justFocused = false } });
+    box.addEventListener("keydown", e=>{ if (e.key==="Enter"){ commit(); box.blur() } if (e.key==="Escape"){ box.value = fmt(current().settings[k]); box.blur() } });
+    box.addEventListener("blur", commit);
+    // − / + buttons, hold to repeat
+    w.querySelectorAll(".nudge").forEach(btn=>{
+      let t1, t2;
+      const stop = ()=>{ clearTimeout(t1); clearInterval(t2) };
+      btn.addEventListener("pointerdown", e=>{
+        e.preventDefault(); const d = +btn.dataset.d;
+        apply(current().settings[k] + d*step);
+        t1 = setTimeout(()=>{ t2 = setInterval(()=> apply(current().settings[k] + d*step), 60) }, 400);
+      });
+      ["pointerup","pointerleave","pointercancel"].forEach(ev=> btn.addEventListener(ev, stop));
+    });
+    // double-click the slider or its name to put it back to normal
+    const reset = ()=>{ apply(NEUTRAL[k]); toast(label + " reset") };
+    input.addEventListener("dblclick", reset);
+    w.querySelector("label").addEventListener("dblclick", reset);
+    input.title = "Drag, use the arrow keys (Shift = bigger steps), or double-click to reset";
+    sliderEls[k] = {input, box, fmt};
+  })};
+  make($("simpleSliders"), SIMPLE); make($("moreSliders"), MORE);
+}
+function syncSliders(){
+  const s = current().settings;
+  for (const [k,{input,box,fmt}] of Object.entries(sliderEls)){ input.value = s[k]; if (document.activeElement !== box) box.value = fmt(s[k]) }
+  $("lookLabel").textContent = current().name;
+  renderSaveState();
+}
+const FIELDS = Object.keys(NEUTRAL);
+const isDirty = l => FIELDS.some(f => Math.abs((l.settings[f]??0) - (l.saved[f]??0)) > 1e-6);
+function renderSaveState(){
+  const l = current(); if (!l) return;
+  l.dirty = isDirty(l);
+  $("savebar").classList.toggle("dirty", l.dirty);
+  $("saveState").textContent = l.dirty ? "Unsaved changes (you're seeing them live)" : "Saved";
+  $("saveBtn").disabled = !l.dirty; $("undoBtn").disabled = !l.dirty;
+  const card = document.querySelector(`.look canvas[data-name="${CSS.escape(l.name)}"]`)?.parentElement;
+  if (card){ let b = card.querySelector(".unsaved"); if (l.dirty && !b){ b = el("span","unsaved","UNSAVED"); card.appendChild(b) } else if (!l.dirty && b) b.remove() }
+}
+async function flushSave(){
+  if (saveTimer){ clearTimeout(saveTimer); saveTimer = null; const l = current(); await api.saveLook(l.name, JSON.stringify(l.settings)) }
+}
+// before leaving a look that has unsaved changes: true = carry on, false = stay
+async function resolveUnsaved(){
+  const l = current(); if (!l || !isDirty(l)) return true;
+  const choice = await modal(`Save changes to "${l.name}"?`, "You changed this look but haven't saved it.", null,
+    [["Cancel", "cancel"], ["Don't save", "discard"], ["Save", "save", "primary"]]);
+  if (!choice || choice === "cancel") return false;
+  await flushSave();
+  S = choice === "save" ? await api.commitLook(l.name) : await api.revertLook(l.name);
+  return true;
+}
+function queueSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ saveTimer = null; const l = current(); api.saveLook(l.name, JSON.stringify(l.settings)) }, 60);
+}
+
+/* ---------------- preview ---------------- */
+function applyFilter(s){
+  const t = tables(s);
+  $("fr").setAttribute("tableValues", t[0]); $("fg").setAttribute("tableValues", t[1]); $("fb").setAttribute("tableValues", t[2]);
+  $("satfx").setAttribute("values", satValue(s));
+}
+function paintPreview(){ applyFilter(current().settings); drawThumbs(true) }
+
+function testChart(){
+  const c = document.createElement("canvas"); c.width = 1280; c.height = 720; const g = c.getContext("2d");
+  const sky = g.createLinearGradient(0,0,0,430); sky.addColorStop(0,"#5d7fa8"); sky.addColorStop(1,"#c9d6e2");
+  g.fillStyle = sky; g.fillRect(0,0,1280,430);
+  g.fillStyle = "#2b2a22"; g.beginPath(); g.moveTo(0,330); g.bezierCurveTo(300,250,500,380,760,300); g.bezierCurveTo(950,240,1100,330,1280,280); g.lineTo(1280,720); g.lineTo(0,720); g.fill();
+  const dirt = g.createLinearGradient(0,380,0,720); dirt.addColorStop(0,"#5a4632"); dirt.addColorStop(1,"#1b140e");
+  g.fillStyle = dirt; g.beginPath(); g.moveTo(0,500); g.bezierCurveTo(400,380,800,420,1280,470); g.lineTo(1280,720); g.lineTo(0,720); g.fill();
+  g.fillStyle = "#0d0b09"; g.beginPath(); g.ellipse(640,520,520,60,0,0,7); g.fill();          // deep shadow across the middle
+  for (let i=0;i<30;i++){ const h = 120+((i*37)%70); g.fillStyle = i%2 ? "#1c1916" : "#24201b"; g.fillRect(20+i*42, 330-h*.4, 24, h) } // dark trees
+  for (let i=0;i<16;i++){ const v=Math.round(i*255/15); g.fillStyle=`rgb(${v},${v},${v})`; g.fillRect(i*80,600,80,60) }   // grey steps, full width
+  ["#d93b3b","#f08a24","#f5d33a","#47b04b","#2e8be6","#7c4be0"].forEach((col,i)=>{ g.fillStyle=col; g.fillRect(Math.round(i*1280/6),660,Math.ceil(1280/6),60) });
+  g.fillStyle = "#f2f2f2"; g.font = "bold 28px Segoe UI, sans-serif"; g.fillText("shadow", 590, 530); g.fillText("dark trees", 20, 390);
+  return c.toDataURL("image/jpeg", .9);
+}
+async function setSource(kind){
+  previewSrc = kind;
+  let data = "";
+  if (kind === "shot"){ data = await api.screenshot(); if (!data){ toast("No game screenshots found yet - showing the test picture"); kind = "chart" } }
+  if (kind === "pick"){ data = await api.pickImage(); if (!data){ setSource(previewSrc === "pick" ? "chart" : previewSrc); return } }
+  if (kind === "chart") data = testChart();
+  imgData = data;
+  $("imgBefore").src = data; $("imgAfter").src = data;
+  ["srcShot","srcChart","srcPick"].forEach(id=>$(id).classList.remove("on"));
+  $({shot:"srcShot",chart:"srcChart",pick:"srcPick"}[kind]).classList.add("on");
+  thumbImg = null; drawThumbs();
+}
+function setSplit(pct){
+  pct = Math.max(0, Math.min(100, pct));
+  $("split").style.left = pct + "%";
+  $("imgAfter").style.clipPath = `inset(0 0 0 ${pct}%)`;
+}
+(function(){
+  const p = $("preview"); let drag = false;
+  const move = e => { const r = p.getBoundingClientRect(); setSplit((e.clientX - r.left)/r.width*100) };
+  p.addEventListener("pointerdown", e=>{ drag = true; p.setPointerCapture(e.pointerId); move(e) });
+  p.addEventListener("pointermove", e=>{ if (drag) move(e) });
+  p.addEventListener("pointerup", ()=> drag = false);
+  setSplit(50);
+})();
+
+/* thumbnails are drawn with the exact curve per pixel */
+let thumbImg = null, thumbBase = null;
+function drawThumbs(onlySelected){
+  if (!imgData) return;
+  if (!thumbImg){
+    thumbImg = new Image(); thumbImg.onload = ()=>{ thumbBase = null; drawThumbs() }; thumbImg.src = imgData; return;
+  }
+  if (!thumbImg.complete) return;
+  const W = 320, H = 180;
+  if (!thumbBase){ const c = document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d");
+    const r = Math.max(W/thumbImg.width, H/thumbImg.height), w = thumbImg.width*r, h = thumbImg.height*r;
+    g.drawImage(thumbImg,(W-w)/2,(H-h)/2,w,h); thumbBase = g.getImageData(0,0,W,H) }
+  document.querySelectorAll(".look canvas").forEach(cv=>{
+    const look = S.looks.find(l=>l.name===cv.dataset.name); if (!look) return;
+    if (onlySelected && look.name !== S.editor) return;
+    const s = look.settings, g = gains(s), f = s.blackFloor/100, lut = [new Uint8ClampedArray(256),new Uint8ClampedArray(256),new Uint8ClampedArray(256)];
+    for (let i=0;i<256;i++){ const b = tone(i/255, s); for (let ch=0;ch<3;ch++) lut[ch][i] = 255*(f+(1-f)*c01(b*g[ch])) }
+    const sat = satValue(s), out = new ImageData(new Uint8ClampedArray(thumbBase.data), W, H), d = out.data;
+    for (let i=0;i<d.length;i+=4){
+      let r=d[i], gg=d[i+1], b=d[i+2];
+      if (sat !== 1){ const L = .2126*r+.7152*gg+.0722*b; r = L+(r-L)*sat; gg = L+(gg-L)*sat; b = L+(b-L)*sat }
+      d[i]=lut[0][Math.max(0,Math.min(255,r|0))]; d[i+1]=lut[1][Math.max(0,Math.min(255,gg|0))]; d[i+2]=lut[2][Math.max(0,Math.min(255,b|0))];
+    }
+    cv.width=W; cv.height=H; cv.getContext("2d").putImageData(out,0,0);
+  });
+}
+
+/* ---------------- looks ---------------- */
+function renderLooks(){
+  const box = $("looks"); box.innerHTML = "";
+  S.looks.forEach(l=>{
+    const b = el("button","look"+(l.name===S.editor?" sel":""));
+    b.innerHTML = `<canvas data-name="${esc(l.name)}"></canvas><div class="name">${esc(l.name)}</div>` + (l.builtIn?"":`<span class="badge">YOURS</span>`) + (isDirty(l)?`<span class="unsaved">UNSAVED</span>`:"");
+    b.onclick = async ()=>{ if (l.name === S.editor) return; if (!await resolveUnsaved()) return; S = await api.selectLook(l.name); renderAll(); toast(`${game()?game().name+": ":""}${l.name}`) };
+    box.appendChild(b);
+  });
+  const add = el("button","look");
+  add.innerHTML = `<div class="add">＋</div><div class="name">Make your own</div>`;
+  add.onclick = async ()=>{ await flushSave(); S = await api.newLook(); renderAll(); openMore(true); toast("New look made from the current settings - adjust and Save") };
+  box.appendChild(add);
+  const bar = $("lookbar"); bar.innerHTML = "";
+  const l = current();
+  const btn = (t, f, cls="btn", dis=false) => { const x = el("button", cls, t); x.disabled = dis; x.onclick = f; bar.appendChild(x) };
+  btn("✎ Rename", renameLook, "btn", l.builtIn);
+  btn("🗑 Delete look", deleteLook, "btn danger", l.builtIn);
+  btn("Share (export)", exportLook);
+  btn("Add a shared look", importLook);
+  if (l.builtIn){ const n = el("span", null, "Built-in looks can't be renamed or deleted. Use Save as new look to make your own copy."); n.style.cssText = "color:var(--muted);font-size:.78em;align-self:center"; bar.appendChild(n) }
+  drawThumbs();
+}
+$("saveBtn").onclick = async ()=>{ await flushSave(); S = await api.commitLook(current().name); renderAll(); toast("Look saved") };
+$("undoBtn").onclick = async ()=>{ saveTimer && clearTimeout(saveTimer); saveTimer = null; S = await api.revertLook(current().name); renderAll(); toast("Changes undone") };
+$("saveAsBtn").onclick = async ()=>{
+  const base = current().builtIn ? "My " + current().name : current().name + " 2";
+  const name = await ask("Save as new look", "Your current settings go into a new look. The original look stays as it was saved.", base, "Save");
+  if (!name) return;
+  await flushSave();
+  try { S = await api.saveAsNewLook(current().name, name); renderAll(); toast(`Saved as "${name}"`) } catch(e){ alertBox("Can't save", String(e)) }
+};
+$("exitBtn").onclick = async ()=>{ if (await confirmBox("Exit Optic?", "Optic will close completely and stop switching on for your games until you open it again. Your screen goes back to normal.", "Exit")) api.exit() };
+async function renameLook(){
+  const name = await ask("Rename look", "", current().name, "Rename");
+  if (!name) return;
+  try { S = await api.renameLook(current().name, name); renderAll() } catch(e){ alertBox("Can't rename", String(e)) }
+}
+async function deleteLook(){
+  if (!await modal("Delete this look?", `"${current().name}" will be permanently removed. Games using it switch to "Off".`, null, [["Cancel", false], ["🗑 Delete", true, "primary"]])) return;
+  S = await api.deleteLook(current().name); renderAll();
+}
+async function exportLook(){
+  try { const path = await api.exportLook(current().name); if (path) alertBox("Saved", "Send this file to a friend. They click \"Add a shared look\" to use it.\n\n" + path) }
+  catch(e){ alertBox("Couldn't save", String(e)) }
+}
+async function importLook(){
+  const before = S.looks.length;
+  try { S = await api.importLook(); renderAll(); if (S.looks.length > before) toast("Look added") } catch(e){ alertBox("That didn't work", String(e)) }
+}
+
+/* ---------------- game card ---------------- */
+function renderGame(){
+  const g = game(), sel = $("gameSel");
+  sel.innerHTML = S.games.map((x,i)=>`<option value="${i}">${esc(x.name)}</option>`).join("");
+  sel.value = S.selectedGame; sel.style.display = S.games.length > 1 ? "" : "none";
+  if (!g){ $("gameName").textContent = "No game added"; $("gameSub").textContent = "Click + Add a game"; return }
+  $("gameName").textContent = g.name;
+  $("gameIc").textContent = g.name.replace(/[^A-Za-z0-9 ]/g,"").split(" ").filter(Boolean).map(w=>w[0]).join("").slice(0,2).toUpperCase() || "G";
+  const bits = [];
+  bits.push(g.running ? "Running now" : (g.folder ? "Ready" : "Location unknown"));
+  if (g.reshade.installed) bits.push("ReShade " + (g.reshade.on ? "ON" : "OFF"));
+  $("gameSub").textContent = bits.join(" · ");
+  const rs = g.reshade.installed;
+  $("rsBox").style.display = rs ? "" : "none";
+  $("rsNone").style.display = rs ? "none" : "";
+  $("rsBadge").style.display = rs ? "" : "none";
+  $("rsBadge").textContent = g.reshade.on ? "ON now" : "OFF now";
+  $("rsBadge").classList.toggle("on", g.reshade.on);
+  const setup = g.setup || (g.reshade.on ? "" : "race");
+  $("raceBtn").classList.toggle("on", setup === "race");
+  $("photoBtn").classList.toggle("on", setup === "photo");
+  const note = $("rsNote");
+  if (g.pending){
+    note.className = "rsnote pending";
+    note.textContent = `${g.name} is open, so ReShade will switch ${g.pending.toUpperCase()} as soon as you close the game.`;
+  } else {
+    note.className = "rsnote";
+    note.textContent = `Start ${g.name} from the MXB App or Steam as normal. Change this any time; if the game is open, the switch happens when you close it.`;
+  }
+  $("plainBtn").textContent = `Start ${g.name} from here instead`;
+  $("removeGame").style.display = S.games.length ? "" : "none";
+}
+$("gameSel").onchange = async e=>{ S = await api.selectGame(+e.target.value); renderAll() };
+$("addGame").onclick = async ()=>{ try { S = await api.addGame(); renderAll() } catch(e){ if (String(e)) alertBox("Couldn't add the game", String(e)) } };
+$("fixFolder").onclick = async ()=>{ try { S = await api.changeGameFolder(S.selectedGame); renderAll() } catch(e){ if (String(e)) alertBox("Couldn't change it", String(e)) } };
+$("removeGame").onclick = async ()=>{ if (await confirmBox("Remove this game?", `Optic will stop switching on for ${game().name}.`, "Remove")){ S = await api.removeGame(S.selectedGame); renderAll() } };
+async function setSetup(setup){
+  try {
+    S = await api.setSetup(S.selectedGame, setup); renderGame();
+    const g = game();
+    toast(g.pending ? `ReShade will switch ${g.pending.toUpperCase()} when ${g.name} closes` : (setup === "race" ? "Race setup: ReShade off, Optic on" : "Photo setup: ReShade on, Optic paused"));
+  } catch(e){ alertBox("Couldn't switch ReShade", String(e)) }
+}
+$("raceBtn").onclick = ()=>setSetup("race"); $("photoBtn").onclick = ()=>setSetup("photo");
+$("plainBtn").onclick = async ()=>{ try { await api.launch("plain"); toast("Starting the game…") } catch(e){ alertBox("Couldn't start", String(e)) } };
+
+/* ---------------- header, settings ---------------- */
+function renderHeader(){
+  $("masterSwitch").classList.toggle("on", S.enabled);
+  $("masterText").textContent = S.enabled ? "Optic is ON" : "Optic is OFF";
+  document.documentElement.style.setProperty("--fs", [16,19,23][S.uiScale] + "px");
+  document.querySelectorAll("[data-scale]").forEach(b=>b.classList.toggle("on", +b.dataset.scale === S.uiScale));
+  $("screenSwitch").classList.toggle("on", S.previewDesktop);
+  const note = $("satNote");
+  if (!S.satName){ note.style.display=""; note.textContent = "The Colour slider needs an NVIDIA or AMD graphics card. Everything else works on any PC." }
+  else note.style.display = "none";
+}
+$("master").onclick = async ()=>{ S = await api.setOption("enabled", !S.enabled); renderHeader() };
+$("master").onkeydown = e=>{ if (e.key===" "||e.key==="Enter"){ e.preventDefault(); $("master").click() } };
+document.querySelectorAll("[data-scale]").forEach(b=> b.onclick = async ()=>{ S = await api.setOption("uiScale", +b.dataset.scale); renderHeader() });
+$("screenToggle").onclick = async ()=>{ S = await api.setPreview(!S.previewDesktop); renderHeader() };
+$("srcShot").onclick = ()=>setSource("shot"); $("srcChart").onclick = ()=>setSource("chart"); $("srcPick").onclick = ()=>setSource("pick");
+function openMore(open){ $("more").classList.toggle("open", open); $("moreBtn").textContent = open ? "Fewer settings ▴" : "More settings ▾" }
+$("moreBtn").onclick = ()=> openMore(!$("more").classList.contains("open"));
+$("resetLook").onclick = async ()=>{
+  const l = current();
+  if (!await confirmBox("Reset this look?", l.builtIn ? `"${l.name}" goes back to how it came with Optic.` : `All of "${l.name}"'s sliders go back to normal.`, "Reset")) return;
+  saveTimer && clearTimeout(saveTimer); saveTimer = null;
+  S = await api.resetLook(l.name); renderAll(); toast("Look reset");
+};
+
+function renderSettings(){
+  const box = $("opts"); box.innerHTML = "";
+  const sw = (key, title, sub) => { const o = el("div","opt"); o.innerHTML = `<div class="txt"><b>${title}</b><span>${sub}</span></div><div class="switch ${S[key]?"on":""}"></div>`;
+    o.onclick = async ()=>{ S = await api.setOption(key, !S[key]); renderSettings() }; box.appendChild(o) };
+  const seg = (key, title, sub, opts) => { const o = el("div","opt"); o.style.display="block"; o.style.cursor="default";
+    o.innerHTML = `<div class="txt"><b>${title}</b><span>${sub}</span></div><div class="seg">${opts.map(([v,t])=>`<button data-v="${v}" class="${S[key]===v?"on":""}">${t}</button>`).join("")}</div>`;
+    o.querySelectorAll("button").forEach(b=> b.onclick = async ()=>{ S = await api.setOption(key, b.dataset.v); renderSettings() }); box.appendChild(o) };
+  sw("startWithWindows","Start with Windows","Optic waits quietly in the tray, so it's always ready when you play");
+  sw("startMinimized","Start hidden in the tray","Don't open this window when Optic starts");
+  seg("mode","When should the look be on?","",[["focused","Only while I'm in the game"],["running","Whenever the game is open"]]);
+  seg("monitors","Which screens?","With two monitors, the other one stays normal",[["game","Just the game's screen"],["all","All my screens"]]);
+  sw("skipReShade","Pause while ReShade is on","Avoid doubling up with your ReShade presets");
+  if (S.updatesEnabled) sw("checkUpdates","Check for updates when Optic starts","You're always asked before anything is downloaded");
+  $("aboutText").textContent = `Optic ${S.version} · created by OB Industries · changes your screen's colours from outside the game, so it can't crash it. Colour uses: ${S.satName || "not available on this PC"}. Settings and log: %APPDATA%\\Optic`;
+}
+$("gear").onclick = ()=>{ renderSettings(); $("sheetScrim").classList.add("show") };
+$("sheetClose").onclick = ()=> $("sheetScrim").classList.remove("show");
+$("sheetScrim").onclick = e=>{ if (e.target.id==="sheetScrim") $("sheetScrim").classList.remove("show") };
+$("emergencyBtn").onclick = async ()=>{ S = await api.emergency(); renderAll(); toast("Screen reset · Optic switched off") };
+$("unlockBtn").onclick = async ()=>{
+  if (S.fullRange){ alertBox("Already allowed", "Stronger looks are already allowed. If you only just did this, sign out of Windows and back in."); return }
+  if (await confirmBox("Allow stronger looks?", "Windows limits how strong a screen colour change can be. This changes one Windows setting so stronger looks work.\n\nWindows will ask for permission. Afterwards, sign out and back in.", "Allow"))
+    try { await api.unlockRange() } catch(e){ alertBox("Not changed", String(e)) }
+};
+
+/* ---------------- modals ---------------- */
+function modal(title, text, input, buttons){
+  return new Promise(res=>{
+    $("mTitle").textContent = title; $("mText").textContent = text; $("mText").style.display = text ? "" : "none";
+    const inp = $("mInput"); inp.style.display = input==null ? "none" : ""; inp.value = input ?? "";
+    const acts = $("mActs"); acts.innerHTML = "";
+    const close = v => { $("modalScrim").classList.remove("show"); res(v) };
+    buttons.forEach(([t, v, cls])=>{ const b = el("button","btn "+(cls||""), t); b.onclick = ()=> close(v===true && input!=null ? inp.value.trim() : v); acts.appendChild(b) });
+    inp.onkeydown = e=>{ if (e.key==="Enter") close(inp.value.trim()); if (e.key==="Escape") close(null) };
+    $("modalScrim").classList.add("show"); if (input!=null) setTimeout(()=>{ inp.focus(); inp.select() }, 30);
+  });
+}
+const ask = (t, x, v, ok) => modal(t, x, v, [["Cancel", null], [ok, true, "primary"]]);
+const confirmBox = (t, x, ok) => modal(t, x, null, [["Cancel", false], [ok, true, "primary"]]);
+const alertBox = (t, x) => modal(t, x, null, [["OK", true, "primary"]]);
+
+/* ---------------- status from the app ---------------- */
+window.onStatus = st => {
+  $("statusText").textContent = st.text + (st.error ? "  —  " + st.error : "");
+  $("statusbar").classList.toggle("err", !!st.error);
+  document.querySelector(".master").classList.toggle("active", st.active);
+  if (S && st.games) { st.games.forEach((g,i)=>{ if (S.games[i]){ Object.assign(S.games[i], {running:g.running, reshade:g.reshade, setup:g.setup, pending:g.pending}) } }); renderGame() }
+};
+window.onStateChanged = async () => { S = await api.state(); renderAll() };  // e.g. hotkeys changed a look
+
+function renderAll(){ renderHeader(); renderLooks(); syncSliders(); renderGame(); paintPreview() }
+
+/* ---------------- What's new (add an entry at the TOP for every release) ---------------- */
+// filled from CHANGELOG.md (built into the app) at start-up
+let CHANGELOG = [];
+const verNum = v => (v||"0").split(".").map(n=>+n||0).reduce((a,n)=>a*1000+n,0);
+function showWhatsNew(sinceVersion, welcome){
+  const body = $("wnBody"); body.innerHTML = "";
+  if (welcome){
+    $("wnTitle").textContent = "Welcome to Optic";
+    body.innerHTML = `<p style="color:var(--muted);margin:6px 0 0">Optic brightens shadows and boosts colour while you play, then puts your screen back to normal when you leave the game. It works from outside the game, so it can't crash it.</p>
+      <h4>Getting started</h4><ul>
+      <li><span class="dot"></span><div><b>Pick a look</b><span>The preview shows Normal vs With Optic. Drag the white line to compare.</span></div></li>
+      <li><span class="dot"></span><div><b>Check your game</b><span>MX Bikes is found automatically. Use "+ Add a game" for others.</span></div></li>
+      <li><span class="dot"></span><div><b>Turn on Start with Windows</b><span>In Settings (the gear), so Optic is always ready when you play.</span></div></li>
+      <li><span class="dot"></span><div><b>Ctrl+Alt+F12 resets your screen</b><span>Any time, from anywhere.</span></div></li></ul>`;
+  } else {
+    $("wnTitle").textContent = "What's new in Optic";
+    const list = CHANGELOG.filter(e => !sinceVersion || verNum(e.v) > verNum(sinceVersion));
+    (list.length ? list : CHANGELOG.slice(0,1)).forEach(e=>{
+      const sec = el("div");
+      sec.innerHTML = `<span class="ver">${esc(e.name)} · ${esc(e.date)}</span>` + (e.from?`<div style="color:var(--muted);font-size:.82em">Changes since ${esc(e.from)}</div>`:"") +
+        `<ul>${e.items.map(it=>`<li><span class="dot"></span><div><b>${esc(it.title)}</b><span>${esc(it.text)}</span></div></li>`).join("")}</ul>`;
+      body.appendChild(sec);
+    });
+  }
+  $("wnScrim").classList.add("show");
+}
+$("wnClose").onclick = async ()=>{ $("wnScrim").classList.remove("show"); if (S.lastSeenVersion !== S.version){ S = await api.markSeen() } };
+$("wnOpen").onclick = ()=>{ $("sheetScrim").classList.remove("show"); showWhatsNew("", false) };
+
+
+/* ---------------- updates ---------------- */
+let U = {status:"idle"}, updHidden = false;
+const mb = n => (n/1048576).toFixed(1)+" MB";
+function renderUpdate(){
+  const bar = $("updbar"), st = U.status;
+  const show = !updHidden && ["available","downloading","ready"].includes(st) || (st==="error" && U.version && !updHidden);
+  bar.classList.toggle("show", !!show);
+  $("updProg").style.display = st==="downloading" ? "block" : "none";
+  $("updProg").firstElementChild.style.width = Math.round((U.progress||0)*100)+"%";
+  const v = U.version ? "Optic "+U.version.replace(/\.0$/,"") : "";
+  $("updSkip").style.display = st==="available" ? "" : "none";
+  $("updNotes").style.display = U.notes ? "" : "none";
+  $("updLater").style.display = st==="downloading" ? "none" : "";
+  $("updGo").style.display = st==="downloading" ? "none" : "";
+  if (st==="available"){ $("updTitle").textContent = v+" is available"; $("updText").textContent = "You have "+U.current.replace(/\.0$/,"")+(U.size ? " · download "+mb(U.size) : ""); $("updGo").textContent = "Download and install" }
+  else if (st==="downloading"){ $("updTitle").textContent = "Downloading "+v+"…"; $("updText").textContent = Math.round((U.progress||0)*100)+"% · you can keep using Optic" }
+  else if (st==="ready"){ $("updTitle").textContent = v+" is ready to install"; $("updText").textContent = "Optic will close, update and open again in a few seconds. Your looks and settings are kept."; $("updGo").textContent = "Install now" }
+  else if (st==="error"){ $("updTitle").textContent = "The update didn't finish"; $("updText").textContent = U.error || ""; $("updGo").textContent = "Try again" }
+  const line = $("updStatus"); if (!line) return;
+  line.textContent = {disabled: U.error || "Update checks are only available in copies installed from the official Optic release.",
+    idle:"Optic checks GitHub for new versions.", checking:"Checking for updates…", uptodate:"You have the latest version ("+(S.version||"").replace(/\.0$/,"")+").",
+    available: v+" is available.", downloading:"Downloading "+v+"…", ready: v+" is ready to install.", error: U.error || "Couldn't check for updates."}[st] || "";
+  $("updCheck").disabled = st==="checking" || st==="downloading";
+}
+window.onUpdate = s => { const was = U.status; U = s; if (s.status==="available" && was!=="available") updHidden = false; renderUpdate() };
+$("updGo").onclick = async ()=>{
+  if (U.status==="available" || (U.status==="error" && U.version)){ updHidden = false; api.updateDownload() }
+  else if (U.status==="ready"){ try { await api.updateInstall() } catch(e){ alertBox("Couldn't install", String(e)) } }
+};
+$("updLater").onclick = ()=>{ updHidden = true; renderUpdate() };
+$("updSkip").onclick = async ()=>{ await api.updateSkip(); toast("You won't be reminded about this version") };
+$("updNotes").onclick = ()=> alertBox("What's new in Optic "+(U.version||"").replace(/\.0$/,""), (U.notes || "").replace(/\*\*/g,"").replace(/^- /gm,"• ").trim());
+$("updCheck").onclick = ()=>{ updHidden = false; api.updateCheck() };
+
+(async function init(){
+  buildSliders();
+  S = await api.state();
+  try { CHANGELOG = await api.changelog() || [] } catch(e){ CHANGELOG = [] }
+  renderAll();
+  await setSource("shot");
+  if (S.lastSeenVersion !== S.version) showWhatsNew(S.lastSeenVersion, S.fresh);
+  try { U = await api.updateState() } catch(e){} renderUpdate();
+})();
+
+/* ---------------- mock backend for browser testing ---------------- */
+function mock(k, a){
+  const N = {blackPoint:0,whitePoint:255,brightness:0,contrast:0,gamma:1,shadows:0,highlights:0,blackFloor:0,saturation:0,temperature:0,tint:0,red:100,green:100,blue:100};
+  if (!window._M) window._M = {version:"1.1.0",lastSeenVersion:"1.0.3",fresh:false,enabled:true,mode:"focused",monitors:"game",skipReShade:false,startWithWindows:true,startMinimized:false,checkUpdates:true,updatesEnabled:true,uiScale:1,previewDesktop:false,
+    satName:"NVIDIA digital vibrance",fullRange:false,editor:"ReShade Style (Levels + Clarity)",selectedGame:0,
+    looks:[["Off",{}],["ReShade Style (Levels + Clarity)",{whitePoint:221,shadows:40,contrast:6}],["Shadow Detail",{shadows:60,highlights:-20,gamma:1.08}],["Night / Supercross",{shadows:80,gamma:1.15,blackFloor:4,saturation:15}],["Bright Day / Glare",{highlights:-50,shadows:20,contrast:8}],["Punchy Colour",{contrast:15,saturation:35,shadows:15}],["Max Visibility",{whitePoint:230,shadows:100,highlights:-30,gamma:1.2,blackFloor:6,contrast:10,saturation:30}]].map(([n,s])=>({name:n,builtIn:true,settings:Object.assign({},N,s),saved:Object.assign({},N,s)})),
+    games:[{name:"MX Bikes",exe:"mxbikes.exe",folder:"C:\\Steam\\steamapps\\common\\MX Bikes",preset:"ReShade Style (Levels + Clarity)",running:false,reshade:{installed:true,on:false,dll:"opengl32.dll"}}]};
+  const M = window._M, clone = () => JSON.parse(JSON.stringify(M));
+  switch(k){
+    case "state": return Promise.resolve(clone());
+    case "selectLook": M.editor = a[0]; M.games[M.selectedGame].preset = a[0]; return Promise.resolve(clone());
+    case "saveLook": M.looks.find(l=>l.name===a[0]).settings = JSON.parse(a[1]); return Promise.resolve(true);
+    case "commitLook": { const l = M.looks.find(l=>l.name===a[0]); l.saved = Object.assign({}, l.settings); return Promise.resolve(clone()) }
+    case "revertLook": { const l = M.looks.find(l=>l.name===a[0]); l.settings = Object.assign({}, l.saved); return Promise.resolve(clone()) }
+    case "saveAsNewLook": { const l = M.looks.find(l=>l.name===a[0]); M.looks.push({name:a[1],builtIn:false,settings:Object.assign({},l.settings),saved:Object.assign({},l.settings)}); l.settings = Object.assign({}, l.saved); M.editor = a[1]; return Promise.resolve(clone()) }
+    case "newLook": { const o = M.looks.find(l=>l.name===M.editor); const c = JSON.parse(JSON.stringify(o)); c.name="My look"; c.builtIn=false; c.saved = Object.assign({}, c.settings); o.settings = Object.assign({}, o.saved); M.looks.push(c); M.editor=c.name; return Promise.resolve(clone()) }
+    case "setOption": M[a[0]] = a[1]; return Promise.resolve(clone());
+    case "setPreview": M.previewDesktop = a[0]; return Promise.resolve(clone());
+    case "screenshot": return Promise.resolve(window.MOCK_SHOT || "");
+    case "changelog": return Promise.resolve(window.MOCK_CHANGELOG || []);
+    case "updateState": return Promise.resolve(window.MOCK_UPDATE || {status:"idle",current:M.version});
+    case "updateCheck": setTimeout(()=>window.onUpdate({status:"checking",current:M.version}),10); setTimeout(()=>window.onUpdate(window.MOCK_UPDATE_NEXT || {status:"uptodate",current:M.version}),400); return Promise.resolve(null);
+    case "updateDownload": { let p=0; const v=Object.assign({},window.MOCK_UPDATE); const t=setInterval(()=>{ p+=.25; window.onUpdate(Object.assign(v,{status:p>=1?"ready":"downloading",progress:Math.min(p,1)})); if(p>=1) clearInterval(t) },120); return Promise.resolve(null) }
+    case "updateInstall": window.MOCK_INSTALLED = true; return Promise.resolve(null);
+    case "updateSkip": window.onUpdate({status:"idle",current:M.version}); return Promise.resolve(null);
+    case "setSetup": { const g = M.games[a[0]]; g.setup = a[1]; if (g.running) g.pending = a[1]==="photo"?"on":"off"; else g.reshade.on = a[1]==="photo"; return Promise.resolve(clone()) }
+    default: return Promise.resolve(clone());
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Checks pull requests and branches: tests, then a full build (exe + installer).
+name: Check
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: sudo apt-get update && sudo apt-get install -y binutils-mingw-w64-x86-64 nsis
+      - run: go test ./...
+      - run: GOOS=windows GOARCH=amd64 go vet .
+      - run: scripts/build.sh

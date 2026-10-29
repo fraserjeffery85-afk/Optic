@@ -1,0 +1,15 @@
+# build output
+/dist/
+*.syso
+/res/app.rc
+*.exe
+
+# NEVER commit the update signing key (it lives in the UPDATE_SIGNING_KEY secret)
+*signing-key*.pem
+*.pem
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

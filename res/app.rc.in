@@ -1,0 +1,24 @@
+1 ICON "../assets/optic.ico"
+1 24 "app.manifest"
+1 VERSIONINFO
+FILEVERSION @VERCOMMA@
+PRODUCTVERSION @VERCOMMA@
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName", "OB Industries"
+      VALUE "FileDescription", "Optic - see more in every shadow"
+      VALUE "ProductName", "Optic"
+      VALUE "FileVersion", "@VERSION@"
+      VALUE "ProductVersion", "@VERSION@"
+      VALUE "LegalCopyright", "Created by OB Industries"
+      VALUE "OriginalFilename", "Optic.exe"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END
