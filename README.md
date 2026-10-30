@@ -52,6 +52,7 @@ See [`docs/UPDATES.md`](docs/UPDATES.md) for setup and releasing. In short:
 | `ui/index.html` | The whole UI (embedded), plus a mock backend for browser testing |
 | `installer/optic.nsi`, `assets/` | Installer, icon, logo, sidebar image |
 | `tools/keygen`, `tools/makeupdate` | Signing key and update manifest tools |
+| `tools/discord_notify.py`, `docs/discord-intro.md`, `docs/optic-logo.png` | Discord release announcements (see docs/UPDATES.md) |
 
 ## Things that must not change
 

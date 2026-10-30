@@ -67,13 +67,21 @@ Function .onInit
     StrCpy $IsUpdate "1"
 FunctionEnd
 
-; Ask a running Optic to close properly (it puts the screen colours back first),
-; then make sure the old exe is no longer in use.
+; Ask every running Optic to close properly (it puts the screen colours back
+; first), then close anything left - including old portable copies (V1.0.x on the
+; desktop or in Downloads), which don't know the quit signal. A force-closed copy
+; leaves restore.json behind, and the new Optic puts the colours back on start.
 !macro CloseOptic
   InitPluginsDir
   File "/oname=$PLUGINSDIR\${EXE}" "${SRC}\${EXE}"
   nsExec::Exec '"$PLUGINSDIR\${EXE}" --quit'
   Pop $0
+  Sleep 1500
+  nsExec::Exec 'taskkill /IM ${EXE} /F'
+  Pop $0
+  nsExec::Exec 'taskkill /IM ClearRide.exe /F'
+  Pop $0
+  ; wait until the installed exe is free to replace (up to ~8 s)
   StrCpy $1 0
   ${Do}
     IfFileExists "$INSTDIR\${EXE}" 0 closed
@@ -86,15 +94,8 @@ FunctionEnd
     Goto closed
     next:
     IntOp $1 $1 + 1
-    ${If} $1 = 6
-      nsExec::Exec 'taskkill /IM ${EXE} /F'
-      Pop $0
-    ${EndIf}
   ${LoopUntil} $1 >= 16
   closed:
-  ; the old app this replaced
-  nsExec::Exec 'taskkill /IM ClearRide.exe /F'
-  Pop $0
 !macroend
 
 !include "LogicLib.nsh"

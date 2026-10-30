@@ -28,3 +28,13 @@ You can also start the action by hand: *Actions → Release → Run workflow*. O
 - **Skip this version** hides that version until a newer one appears. Settings → *Check for updates* still finds it. The start-up check can be turned off in Settings.
 - Downloaded installers go to `%APPDATA%\Optic\updates` and are deleted the next time Optic starts.
 - The installer runs silently (`/S /UPDATE`): it asks the running Optic to close (Optic puts the screen colours back first), replaces `Optic.exe` in `%LOCALAPPDATA%\Programs\Optic`, and opens it again. Looks and settings in `%APPDATA%\Optic` are never touched.
+
+## Discord announcements
+
+Each new release is posted in your Discord channel with the full release notes and a download link. `tools/discord_notify.py` writes the post; `release.yml` runs it right after publishing.
+
+1. **Create the webhook.** In Discord: *Server Settings → Integrations → Webhooks → New Webhook*, choose the channel, then *Copy Webhook URL*.
+2. **Add the secret.** In the GitHub repository: *Settings → Secrets and variables → Actions → New repository secret*, name `DISCORD_WEBHOOK`, value = the webhook URL. (A URL ending in `/github` works too; the suffix is removed.) Without this secret, releases still publish and the Discord step just says it skipped.
+3. **Delete any old GitHub → Discord webhook.** If you ever added the Discord URL under the repository's *Settings → Webhooks* (the `/github` kind), delete it there. It only posts the release title, and it would double up with the new posts.
+
+**Re-posting.** *Actions → Announce latest release on Discord → Run workflow* posts the latest release again. Leave **include_intro** ticked to start the post with the introduction from `docs/discord-intro.md` (edit that file to change the wording), or untick it for a plain release post. Normal release posts never include the intro.

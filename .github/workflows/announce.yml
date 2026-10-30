@@ -1,0 +1,42 @@
+# Re-posts the latest GitHub release in the Discord channel (Actions → this
+# workflow → Run workflow). Tick "include_intro" to start the post with the
+# introduction in docs/discord-intro.md (used for the first post).
+name: Announce latest release on Discord
+on:
+  workflow_dispatch:
+    inputs:
+      include_intro:
+        description: Start the post with the introduction to Optic (docs/discord-intro.md)
+        type: boolean
+        default: true
+permissions:
+  contents: read
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check the Discord webhook is set
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "::error::The DISCORD_WEBHOOK secret is missing. Add it under Settings → Secrets and variables → Actions (see docs/UPDATES.md)."; exit 1
+          fi
+      - name: Get the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view --json tagName,body,url > release.json
+          jq -r .body release.json > notes.md
+          echo "Latest release: $(jq -r .tagName release.json)"
+      - name: Post to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          INCLUDE_INTRO: ${{ inputs.include_intro }}
+        run: |
+          tag=$(jq -r .tagName release.json)
+          url=$(jq -r .url release.json)
+          intro=()
+          if [ "$INCLUDE_INTRO" = "true" ]; then intro=(--intro docs/discord-intro.md); fi
+          python3 tools/discord_notify.py "${tag#v}" notes.md "$url" "${intro[@]}"

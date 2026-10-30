@@ -1,6 +1,7 @@
 # Publishes a release whenever main has a version (appVersion in version.go) that
 # hasn't been released yet. GitHub creates the v<version> tag itself. Can also be
 # started from the Actions tab (Run workflow). Needs the secret UPDATE_SIGNING_KEY.
+# If the secret DISCORD_WEBHOOK is set, the release is also announced on Discord.
 # Everything runs on Linux: Go cross-compiles Optic.exe, NSIS builds the installer.
 name: Release
 on:
@@ -54,9 +55,20 @@ jobs:
           OPTIC_UPDATE_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
         run: scripts/build.sh --sign
       - name: Publish release
+        id: publish
         if: steps.version.outputs.new == 'true'
         run: |
           v=${{ steps.version.outputs.version }}
+          # notes = the newest "## <version>" section of CHANGELOG.md (written into update.json by tools/makeupdate)
           jq -r .notes dist/update/update.json > notes.md
           gh release create "v$v" "dist/Optic-Setup-$v.exe" dist/update/update.json dist/update/update.json.sig \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Optic $v" --notes-file notes.md
+      - name: Announce on Discord
+        # only when this run actually published a new release
+        if: steps.version.outputs.new == 'true' && steps.publish.outcome == 'success'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          v=${{ steps.version.outputs.version }}
+          python3 tools/discord_notify.py "$v" notes.md "https://github.com/${{ github.repository }}/releases/tag/v$v"

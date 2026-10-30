@@ -20,8 +20,9 @@ func TestChangelogParses(t *testing.T) {
 			}
 		}
 	}
-	if e[4].Name != "Optic V1.0" || e[4].From != "ClearRide 2.0.1" {
-		t.Fatalf("bad parse of 1.0.0: %+v", e[4])
+	first := e[len(e)-1]
+	if first.Version != "1.0.0" || first.Name != "Optic V1.0" || first.From != "ClearRide 2.0.1" {
+		t.Fatalf("bad parse of 1.0.0: %+v", first)
 	}
 	if releaseNotes(changelogMD, "1.0.2") == "" {
 		t.Fatal("no notes for 1.0.2")

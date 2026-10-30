@@ -2,6 +2,11 @@
 
 Each section here appears in Optic's "What's new" pop-up and as the release notes on GitHub. Newest first. Format: `## <version> (<date>)`, an optional "Changes since …" line, then `- **Title**: description` bullets.
 
+## 1.1.1 (30 October 2026)
+Changes since Optic V1.1
+- **Smoother switch from the old zip version**: the installer now also closes an old Optic.exe you kept on your desktop or in Downloads, so you don't have to exit it from the tray first. Delete the old file afterwards; your looks and settings are kept.
+- **Release announcements on Discord**: new versions are posted in the Optic Discord channel with the full list of changes and a download link.
+
 ## 1.1.0 (29 October 2026)
 Changes since Optic V1.0.3
 - **One-file installer**: Optic now comes as Optic-Setup.exe. It installs for you only (no admin password), adds desktop and Start menu shortcuts, opens Optic when it's done, and appears in Windows Settings → Apps for uninstalling.
